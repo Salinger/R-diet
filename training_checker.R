@@ -4,7 +4,7 @@
 #
 ##############################################################################
 
-training.data <- read.table("my_training.csv", header=T, sep=",")
+training.data <- read.table("training_result.csv", header=T, sep=",")
 print(training.data)
 browser() # 一時停止
 
@@ -20,7 +20,7 @@ browser()
 # c()はベクトルを生成する関数。
 
 names(training.data) <- c(
-    "date", "weight", "bodyfat", "run", "cycling", "warming_up",
+    "date", "weight", "bodyfat", "fat_kg", "run", "cycling", "warming_up",
     "sit_up", "back_extension", "press_up", "squat", "calf", "dumblell"
     )
 
@@ -229,24 +229,18 @@ browser() # 一時停止
  
 subset.fat <- subset(
     training.data,      # 切り出し元の dataframe 
-    !is.na(weight),      # "weight" が NA でないもののみ (! は not)
-    c("date","weight","bodyfat")  # "date" と "weight" と "bodyfat"
+    !is.na(fat_kg),     # "weight" が NA でないもののみ (! は not)
+    c("date","fat_kg")  # "date" と "fat_kg"
 )
-
-fat <- data.frame(
-    subset.fat$date,
-    subset.fat$weight * subset.fat$bodyfat / 100
-    )
-names(fat) <- c("date","bodyfat")
 
 # "date" と "bodyfat" のデータフレームができた。解析する。
 # とりあえず、グラフにプロット。
 
-plot(bodyfat ~ date, data = fat)
+plot(fat_kg ~ date, data = subset.fat)
 
-# 単回帰分析を行なってみる。 (y = ax + b [y: bodyfat, x: date])
+# 単回帰分析を行なってみる。 (y = ax + b [y: fat_kg, x: date])
 
-result.fat <- lm(bodyfat ~ date,data = fat)
+result.fat <- lm(fat_kg ~ date,data = subset.fat)
 print(result.fat)
 
 # とりあえず分析結果をプロット
@@ -275,8 +269,8 @@ result.fat.predict <- predict(
 #     青：予測区間
 
 plot(
-    x=fat$date,
-    y=fat$bodyfat,
+    x=subset.fat$date,
+    y=subset.fat$fat_kg,
     xlim=c(as.Date(date.start),as.Date(date.last)),
     ylim=c(0,15),
     ylab="Body fat [kg]",
@@ -284,7 +278,7 @@ plot(
 )
 par(new=T) # 前のグラフに上書き
 plot(
-    x=fat$date,
+    x=subset.fat$date,
     y=result.fat.confidence[,1],
     type="l",
     xlim=c(as.Date(date.start),as.Date(date.last)),
@@ -294,7 +288,7 @@ plot(
 )
 par(new=T)
 plot(
-    x=fat$date,
+    x=subset.fat$date,
     y=result.fat.confidence[,2],
     type="l",
     xlim=c(as.Date(date.start),as.Date(date.last)),
@@ -338,14 +332,3 @@ plot(
 )
 
 # 体脂肪の減少は統計的に有意（p < 0.001）である！
-
-
-##############################################################################
-#
-#    References
-#
-##############################################################################
-
-# Rで線形単回帰分析, http://d.hatena.ne.jp/matsuou1/20110418/1303144024
-# R-tips, http://cse.naro.affrc.go.jp/takezawa/r-tips/r.html
-# 単回帰出力結果の読み方, http://hnami.or.tv/d/index.php?%C3%B1%B2%F3%B5%A2%BD%D0%CE%CF%B7%EB%B2%CC%A4%CE%C6%C9%A4%DF%CA%FD
